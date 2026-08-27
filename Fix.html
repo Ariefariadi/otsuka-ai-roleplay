@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Role Play & Assessment - Otsuka</title>
+    <style>
+      :root {
+        --ink: #1c1b19;
+        --paper: #f4f2ec;
+        --panel: #fff;
+        --line: #dcd6c8;
+        --accent: #0b6fb8;
+        --accent-dark: #08507f;
+        --good: #3f6d4e;
+        --warn: #a4491f;
+        --bad: #9c3b3b;
+        --muted: #6f6a5e;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+        font-family: Arial, Helvetica, sans-serif;
+        color: var(--ink);
+      }
+      #app {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        max-width: 820px;
+        margin: 0 auto;
+      }
+
+      header {
+        background: var(--accent-dark);
+        color: #fff;
+        padding: 8px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        gap: 6px;
+        min-width: 0;
+      }
+      header h1 {
+        font-size: 0.85rem;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+      }
+      header .state-pill {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: rgba(255, 255, 255, 0.18);
+        padding: 3px 9px;
+        border-radius: 999px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      #scrollArea {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      #transcript {
+        padding: 16px 16px 6px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+      .bubble {
+        max-width: 80%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 0.92rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+      .bubble.customer {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+      }
+      .bubble.sales {
+        background: var(--accent);
+        color: #fff;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+      }
+      .bubble.system {
+        background: transparent;
+        border: 1px dashed var(--line);
+        color: var(--muted);
+        align-self: center;
+        font-size: 0.82rem;
+        text-align: center;
+        max-width: 90%;
+      }
+      .bubble.assessment {
+        background: #fff;
+        border: 2px solid var(--accent);
+        align-self: stretch;
+        max-width: 100%;
+      }
+      .bubble .label {
+        display: block;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+        opacity: 0.7;
+      }
+
+      .quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 4px 16px 10px;
+        flex-shrink: 0;
+        align-items: center;
+      }
+      .quick-label {
+        width: 100%;
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin: 2px 0 0;
+      }
+      .quick-btn {
+        background: #fff;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 7px 14px;
+        font-size: 0.82rem;
+        cursor: pointer;
+      }
+      .quick-btn:hover {
+        background: var(--accent);
+        color: #fff;
+      }
+      .quick-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .quick-btn.danger {
+        border-color: var(--bad);
+        color: var(--bad);
+      }
+      .quick-btn.danger:hover {
+        background: var(--bad);
+        color: #fff;
+      }
+
+      #inputRow {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid var(--line);
+        background: var(--panel);
+        flex-shrink: 0;
+      }
+      #textInput {
+        flex: 1;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 16px;
+        font-family: inherit;
+        resize: none;
+        min-height: 44px;
+      }
+      #sendBtn {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 0 18px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-width: 44px;
+      }
+      #sendBtn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      #micBtn {
+        background: #fff;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        border-radius: 8px;
+        width: 44px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+      #micBtn.recording {
+        background: var(--bad);
+        border-color: var(--bad);
+        color: #fff;
+        animation: micPulse 1s infinite;
+      }
+      #micBtn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+      @keyframes micPulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      #printArea {
+        display: none;
+      }
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #printArea,
+        #printArea * {
+          visibility: visible;
+        }
+        #printArea {
+          display: block;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 24px;
+          font-family: Arial, Helvetica, sans-serif;
+          color: #000;
+        }
+        #printArea h1 {
+          font-size: 1.3rem;
+          margin-bottom: 2px;
+        }
+        #printArea .meta {
+          font-size: 0.85rem;
+          color: #555;
+          margin-bottom: 16px;
+        }
+        #printArea .score-line {
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 12px;
+        }
+        #printArea table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 16px;
+        }
+        #printArea td {
+          padding: 4px 6px;
+          border-bottom: 1px solid #ddd;
+          font-size: 0.85rem;
+        }
+        #printArea h2 {
+          font-size: 1rem;
+          margin: 16px 0 6px;
+          border-bottom: 1px solid #999;
+          padding-bottom: 2px;
+        }
+        #printArea ul {
+          margin: 0 0 10px;
+          padding-left: 18px;
+          font-size: 0.85rem;
+        }
+      }
+
+      #setupNotice {
+        margin: 16px;
+        padding: 14px;
+        background: #fbeee8;
+        border: 1px solid var(--bad);
+        color: var(--bad);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        display: none;
+      }
+      #debugLine {
+        margin: 4px 16px 0;
+        padding: 4px 10px;
+        background: #eef4fa;
+        border: 1px dashed var(--accent);
+        color: var(--accent-dark);
+        border-radius: 6px;
+        font-size: 0.68rem;
+        font-family: monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+        flex-shrink: 0;
+      }
+      .typing-dots {
+        display: inline-flex;
+        gap: 3px;
+        align-self: flex-start;
+        padding: 8px 12px;
+      }
+      .typing-dots span {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--muted);
+        animation: bounce 1.2s infinite;
+      }
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes bounce {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.5;
+        }
+        30% {
+          transform: translateY(-4px);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="printArea"></div>
+      <header>
+        <h1>AI Role Play &amp; Assessment</h1>
+        <span class="state-pill" id="statePill">Setup</span>
+      </header>
+
+      <div id="setupNotice">
+        Proxy AI belum diatur (<code>CONFIG.PROXY_URL</code> kosong). Simulasi
+        tidak bisa berjalan tanpa proxy aktif — lihat panduan penggunaan untuk
+        deploy <code>gemini-proxy-otsuka.gs</code>.
+      </div>
+
+      <div id="debugLine">Debug: menunggu aktivitas...</div>
+
+      <div id="scrollArea">
+        <div id="transcript"></div>
+        <div class="quick-actions" id="quickActions"></div>
+      </div>
+
+      <div id="inputRow">
+        <button id="micBtn" title="Rekam suara" type="button">🎤</button>
+        <textarea
+          id="textInput"
+          rows="1"
+          placeholder="Ketik respons Anda sebagai Sales Representative..."
+        ></textarea>
+        <button id="sendBtn">Kirim</button>
+      </div>
+    </div>
+
+    <script>
+      /* =========================================================================
+   KONFIGURASI
+   ========================================================================= */
+      const CONFIG = {
+        PROXY_URL:
+          "https://script.google.com/macros/s/AKfycbw4IKhX-NisSzPDXxpNjcMi3XE9_KymIObszeFFkxoD7O2SR7edjdf9sFxFCerdNBEL/exec",
+        API_TIMEOUT_MS: 60000, // dinaikkan: assessment sekarang 2x panggilan API berurutan (narasi + ekstraksi JSON)
+        LANGUAGES: [
+          "Bahasa Indonesia",
+          "Bahasa Sunda",
+          "Bahasa Jawa",
+          "Bahasa Melayu Ambon",
+          "Bahasa Melayu Papua",
+        ],
+        LEVELS: ["Basic", "Intermediate", "Advanced"],
+        PRODUCTS: ["SOYJOY", "Oronamin C", "Fibe Mini", "Ion Water"],
+      };
+
+      /* =========================================================================
+   STATE
+   ========================================================================= */
+      let state = {
+        phase: "HOME", // HOME -> SETUP -> LANGUAGE -> READY -> ROLEPLAY -> ASSESSMENT
+        language: null,
+        level: null,
+        product: null,
+        participantName: null,
+        participantNik: null,
+        history: [], // {role:'user'|'model', text}
+        finalResult: null,
+      };
+
+      const els = {
+        transcript: document.getElementById("transcript"),
+        scrollArea: document.getElementById("scrollArea"),
+        quickActions: document.getElementById("quickActions"),
+        textInput: document.getElementById("textInput"),
+        sendBtn: document.getElementById("sendBtn"),
+        micBtn: document.getElementById("micBtn"),
+        statePill: document.getElementById("statePill"),
+        setupNotice: document.getElementById("setupNotice"),
+        debugLine: document.getElementById("debugLine"),
+      };
+
+      function logDebug(text) {
+        if (!els.debugLine) return;
+        const time = new Date().toLocaleTimeString("id-ID", { hour12: false });
+        els.debugLine.textContent = `[${time}] ${text}`;
+      }
+
+      function init() {
+        if (!CONFIG.PROXY_URL) {
+          els.setupNotice.style.display = "block";
+        }
+        // Web app standalone (Netlify) — langsung tampilkan form Nama/NIK.
+        // Listener postMessage tetap aktif di belakang layar untuk kompatibilitas
+        // kalau suatu saat di-embed ulang (misal ke Storyline), tapi tidak ditunggu.
+        showHome();
+      }
+
+      /* =========================================================================
+   KONFIGURASI DARI STORYLINE (SL_Language / SL_Level lewat postMessage)
+   ========================================================================= */
+      const LANGUAGE_MAP = {
+        Indonesia: "Bahasa Indonesia",
+        Sunda: "Bahasa Sunda",
+        Jawa: "Bahasa Jawa",
+        "Melayu Ambon": "Bahasa Melayu Ambon",
+        "Melayu Papua": "Bahasa Melayu Papua",
+      };
+      function normalizeLanguage(val) {
+        if (!val) return null;
+        if (LANGUAGE_MAP[val]) return LANGUAGE_MAP[val];
+        return val.startsWith("Bahasa") ? val : "Bahasa " + val;
+      }
+      function normalizeLevel(val) {
+        if (!val) return null;
+        const match = CONFIG.LEVELS.find(
+          (l) => l.toLowerCase() === String(val).toLowerCase(),
+        );
+        return match || val;
+      }
+      function applyIncomingConfig() {
+        if (
+          state.language &&
+          state._levelLocked &&
+          (state.phase === "SETUP" || state.phase === "READY" || !state.phase)
+        ) {
+          // bahasa & level sudah ditentukan Storyline -> langsung mulai, skip layar pilihan
+          if (state.phase !== "ROLEPLAY") {
+            startRoleplay();
+          }
+        } else if (
+          state.language &&
+          (state.phase === "SETUP" || !state.phase)
+        ) {
+          state.phase = "READY";
+          updateStatePill();
+          renderReadyPanel();
+        } else if (state.phase === "READY") {
+          renderReadyPanel();
+        }
+      }
+
+      window.addEventListener("message", (event) => {
+        const data = event.data;
+        if (!data || !data.type) return;
+        logDebug(`Diterima: ${JSON.stringify(data)}`);
+
+        if (data.type === "SET_PARTICIPANT") {
+          if (data.name) state.participantName = data.name;
+          if (data.nik) state.participantNik = data.nik;
+          logDebug(
+            `SET_PARTICIPANT -> nama:"${state.participantName}" nik:"${state.participantNik}"`,
+          );
+          return;
+        }
+
+        if (data.type === "SET_LANGUAGE" && data.language) {
+          state._configReceived = true;
+          state.language = normalizeLanguage(data.language);
+          state._languageLocked = true;
+          logDebug(
+            `SET_LANGUAGE -> "${data.language}" jadi "${state.language}"`,
+          );
+          applyIncomingConfig();
+          return;
+        }
+        if (data.type === "SET_LEVEL" && data.level) {
+          state._configReceived = true;
+          state.level = normalizeLevel(data.level);
+          state._levelLocked = true;
+          logDebug(`SET_LEVEL -> "${data.level}" jadi "${state.level}"`);
+          applyIncomingConfig();
+          return;
+        }
+        if (data.type === "SET_MISSION") {
+          state._configReceived = true;
+          if (data.language) {
+            state.language = normalizeLanguage(data.language);
+            state._languageLocked = true;
+          }
+          if (data.level) {
+            state.level = normalizeLevel(data.level);
+            state._levelLocked = true;
+          }
+          logDebug(
+            `SET_MISSION -> bahasa:"${state.language}" level:"${state.level}"`,
+          );
+          applyIncomingConfig();
+          return;
+        }
+        if (data.type === "AI_SET_CONFIG") {
+          state._configReceived = true;
+          if (data.language) {
+            state.language = normalizeLanguage(data.language);
+            state._languageLocked = true;
+          }
+          if (data.level) {
+            state.level = normalizeLevel(data.level);
+            state._levelLocked = true;
+          }
+          if (data.product) state.product = data.product;
+          applyIncomingConfig();
+        }
+      });
+
+      function updateStatePill() {
+        const map = {
+          HOME: "Data Diri",
+          SETUP: "Pilih Bahasa",
+          LANGUAGE: "Pilih Bahasa",
+          READY: "Siap Mulai",
+          ROLEPLAY: "Role Play Berlangsung",
+          ASSESSMENT: "Assessment Selesai",
+        };
+        els.statePill.textContent = map[state.phase] || state.phase;
+      }
+
+      /* =========================================================================
+   BUBBLE HELPERS
+   ========================================================================= */
+      function addBubble(role, text, extraClass) {
+        const div = document.createElement("div");
+        div.className = "bubble " + (extraClass || role);
+        if (role === "model")
+          div.innerHTML =
+            '<span class="label">Customer</span>' + escapeHtml(text);
+        else if (role === "user")
+          div.innerHTML =
+            '<span class="label">Anda (Sales)</span>' + escapeHtml(text);
+        else div.textContent = text;
+        els.transcript.appendChild(div);
+        els.scrollArea.scrollTop = els.scrollArea.scrollHeight;
+        return div;
+      }
+      function escapeHtml(str) {
+        const d = document.createElement("div");
+        d.textContent = str;
+        return d.innerHTML;
+      }
+      function showTyping() {
+        const el = document.createElement("div");
+        el.className = "typing-dots";
+        el.id = "typingIndicator";
+        el.innerHTML = "<span></span><span></span><span></span>";
+        els.transcript.appendChild(el);
+        els.scrollArea.scrollTop = els.scrollArea.scrollHeight;
+      }
+      function hideTyping() {
+        const el = document.getElementById("typingIndicator");
+        if (el) el.remove();
+      }
+
+      /* =========================================================================
+   TAHAP 0 — HOME / INPUT NAMA & NIK
+   (web app standalone — data ini hanya untuk pelaporan/PDF/Sheet,
+   TIDAK pernah dikirim ke AI selama roleplay)
+   ========================================================================= */
+      function showHome() {
+        state.phase = "HOME";
+        updateStatePill();
+        els.transcript.innerHTML = "";
+        addBubble(
+          "system",
+          "Selamat datang di AI Role Play & Assessment Simulator Handling Objection Baby Brand.\nSilakan isi data Anda untuk memulai.",
+        );
+
+        els.quickActions.innerHTML = "";
+
+        const wrap = document.createElement("div");
+        wrap.style.cssText =
+          "width:100%;display:flex;flex-direction:column;gap:8px;";
+
+        const nameInput = document.createElement("input");
+        nameInput.type = "text";
+        nameInput.placeholder = "Nama lengkap";
+        nameInput.id = "homeNameInput";
+        nameInput.style.cssText =
+          "border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:16px;font-family:inherit;min-height:44px;";
+
+        const nikInput = document.createElement("input");
+        nikInput.type = "text";
+        nikInput.placeholder = "NIK / ID Karyawan";
+        nikInput.id = "homeNikInput";
+        nikInput.style.cssText =
+          "border:1px solid var(--line);border-radius:6px;padding:10px 12px;font-size:16px;font-family:inherit;min-height:44px;";
+
+        wrap.appendChild(nameInput);
+        wrap.appendChild(nikInput);
+        els.quickActions.appendChild(wrap);
+
+        const continueBtn = document.createElement("button");
+        continueBtn.className = "quick-btn";
+        continueBtn.style.cssText =
+          "background:var(--accent);color:#fff;font-weight:700;margin-top:4px;";
+        continueBtn.textContent = "Lanjut";
+        continueBtn.addEventListener("click", () => {
+          const name = nameInput.value.trim();
+          const nik = nikInput.value.trim();
+          if (!name) {
+            nameInput.style.borderColor = "var(--bad)";
+            nameInput.focus();
+            return;
+          }
+          state.participantName = name;
+          state.participantNik = nik;
+          showWelcome();
+        });
+        els.quickActions.appendChild(continueBtn);
+
+        setInputEnabled(false);
+      }
+
+      /* =========================================================================
+   TAHAP 1 — SETUP / PILIH BAHASA  (teks tetap, tidak perlu panggil AI)
+   ========================================================================= */
+      function showWelcome() {
+        state.phase = "SETUP";
+        updateStatePill();
+        renderLanguageButtons();
+      }
+
+      function renderLanguageButtons() {
+        els.quickActions.innerHTML = "";
+        const label = document.createElement("div");
+        label.className = "quick-label";
+        label.textContent = "Pilih bahasa:";
+        els.quickActions.appendChild(label);
+        CONFIG.LANGUAGES.forEach((lang) => {
+          const btn = document.createElement("button");
+          btn.className = "quick-btn";
+          btn.textContent = lang;
+          btn.addEventListener("click", () => chooseLanguage(lang));
+          els.quickActions.appendChild(btn);
+        });
+        setInputEnabled(false);
+      }
+
+      function chooseLanguage(lang) {
+        state.language = lang;
+        state.phase = "READY";
+        updateStatePill();
+        addBubble(
+          "system",
+          `Baik. Simulasi akan menggunakan ${lang} sehari-hari.`,
+        );
+        renderReadyPanel();
+      }
+
+      /* =========================================================================
+   TAHAP 2 — LEVEL, PRODUK, TOMBOL MULAI  (masih teks tetap)
+   ========================================================================= */
+      function renderReadyPanel() {
+        els.quickActions.innerHTML = "";
+
+        const levelWrap = document.createElement("div");
+        levelWrap.style.cssText =
+          "width:100%;font-size:.78rem;color:var(--muted);margin-bottom:2px;";
+        levelWrap.textContent = state._levelLocked
+          ? "Level (ditentukan stage ini):"
+          : "Level (opsional, default Basic):";
+        els.quickActions.appendChild(levelWrap);
+
+        if (state._levelLocked) {
+          const fixedBadge = document.createElement("span");
+          fixedBadge.className = "quick-btn";
+          fixedBadge.style.cssText =
+            "background:var(--accent);color:#fff;font-weight:700;cursor:default;";
+          fixedBadge.textContent = state.level;
+          els.quickActions.appendChild(fixedBadge);
+        } else {
+          CONFIG.LEVELS.forEach((level) => {
+            const btn = document.createElement("button");
+            btn.className = "quick-btn";
+            btn.textContent = level + (state.level === level ? " ✓" : "");
+            btn.addEventListener("click", () => {
+              state.level = level;
+              renderReadyPanel();
+            });
+            els.quickActions.appendChild(btn);
+          });
+        }
+
+        const prodWrap = document.createElement("div");
+        prodWrap.style.cssText =
+          "width:100%;font-size:.78rem;color:var(--muted);margin:6px 0 2px;";
+        prodWrap.textContent = "Produk (opsional):";
+        els.quickActions.appendChild(prodWrap);
+
+        CONFIG.PRODUCTS.forEach((prod) => {
+          const btn = document.createElement("button");
+          btn.className = "quick-btn";
+          btn.textContent = prod + (state.product === prod ? " ✓" : "");
+          btn.addEventListener("click", () => {
+            state.product = prod;
+            renderReadyPanel();
+          });
+          els.quickActions.appendChild(btn);
+        });
+
+        if (!state._languageLocked) {
+          const changeLangBtn = document.createElement("button");
+          changeLangBtn.className = "quick-btn";
+          changeLangBtn.textContent = "Ganti Bahasa";
+          changeLangBtn.addEventListener("click", showWelcome);
+          els.quickActions.appendChild(changeLangBtn);
+        }
+
+        const startBtn = document.createElement("button");
+        startBtn.className = "quick-btn";
+        startBtn.style.cssText =
+          "background:var(--accent);color:#fff;font-weight:700;";
+        startBtn.textContent = "Mulai Simulasi";
+        startBtn.addEventListener("click", startRoleplay);
+        els.quickActions.appendChild(startBtn);
+
+        setInputEnabled(false);
+      }
+
+      /* =========================================================================
+   TAHAP 3 — MULAI ROLE PLAY  (panggilan AI pertama)
+   ========================================================================= */
+      async function startRoleplay() {
+        state.phase = "ROLEPLAY";
+        updateStatePill();
+        els.quickActions.innerHTML = "";
+
+        const level = state.level || "Basic";
+        const opener =
+          `Mulai Simulasi. Bahasa: ${state.language}. Level: ${level}.` +
+          (state.product ? ` Produk: ${state.product}.` : "");
+
+        addBubble(
+          "system",
+          `Simulasi dimulai — Bahasa: ${state.language} | Level: ${level}` +
+            (state.product ? ` | Produk: ${state.product}` : ""),
+        );
+
+        await sendToAI(opener, /*showUserBubble*/ false);
+        renderRoleplayActions();
+        setInputEnabled(true);
+      }
+
+      function renderRoleplayActions() {
+        els.quickActions.innerHTML = "";
+        const endBtn = document.createElement("button");
+        endBtn.className = "quick-btn danger";
+        endBtn.textContent = "Simulasi Selesai";
+        endBtn.addEventListener("click", endRoleplay);
+        els.quickActions.appendChild(endBtn);
+      }
+
+      /* =========================================================================
+   CHAT BEBAS SELAMA ROLE PLAY
+   ========================================================================= */
+      els.sendBtn.addEventListener("click", handleSend);
+      els.textInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          handleSend();
+        }
+      });
+
+      async function handleSend() {
+        const text = els.textInput.value.trim();
+        if (!text || state.phase !== "ROLEPLAY") return;
+        els.textInput.value = "";
+        await sendToAI(text, true);
+      }
+
+      async function endRoleplay() {
+        setInputEnabled(false);
+        els.quickActions.innerHTML = "";
+        await sendToAI("Simulasi Selesai.", true);
+      }
+
+      /* =========================================================================
+   PANGGIL PROXY AI — mengirim SELURUH riwayat percakapan
+   ========================================================================= */
+      async function sendToAI(userText, showUserBubble) {
+        if (showUserBubble) addBubble("user", userText);
+        state.history.push({ role: "user", text: userText });
+
+        setInputEnabled(false);
+        showTyping();
+
+        if (!CONFIG.PROXY_URL) {
+          hideTyping();
+          addBubble(
+            "system",
+            "Proxy belum diatur — lihat catatan di bagian atas layar.",
+          );
+          setInputEnabled(state.phase === "ROLEPLAY");
+          return;
+        }
+
+        try {
+          const replyText = await callAIProxy();
+          hideTyping();
+          handleAIReply(replyText);
+        } catch (err) {
+          hideTyping();
+          addBubble(
+            "system",
+            "Koneksi ke AI gagal: " + err.message + ". Coba kirim ulang.",
+          );
+          setInputEnabled(state.phase === "ROLEPLAY");
+        }
+      }
+
+      async function callAIProxy() {
+        const controller = new AbortController();
+        const timeout = setTimeout(
+          () => controller.abort(),
+          CONFIG.API_TIMEOUT_MS,
+        );
+
+        const res = await fetch(CONFIG.PROXY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, // hindari CORS preflight ke Apps Script
+          body: JSON.stringify({ history: state.history }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        if (data.error)
+          throw new Error(data.message || "Error tidak diketahui");
+        if (!data || typeof data.reply !== "string")
+          throw new Error("Format balasan tidak valid");
+        return data.reply;
+      }
+
+      /* =========================================================================
+   TANGANI BALASAN AI — deteksi blok <SCORM_DATA> untuk hasil akhir
+   ========================================================================= */
+      function handleAIReply(rawText) {
+        const scormMatch = rawText.match(
+          /<SCORM_DATA>([\s\S]*?)<\/SCORM_DATA>/,
+        );
+        const errorMatch = rawText.match(
+          /<SCORM_ERROR>([\s\S]*?)<\/SCORM_ERROR>/,
+        );
+        let displayText = rawText;
+
+        if (errorMatch) {
+          displayText = displayText.replace(errorMatch[0], "").trim();
+          logDebug(`Ekstraksi SCORM_DATA gagal di proxy: ${errorMatch[1]}`);
+        } else {
+          logDebug(
+            `Balasan diterima (${rawText.length} karakter). Ada tag SCORM_DATA: ${scormMatch ? "YA" : "TIDAK"}. Ekor teks: ...${rawText.slice(-150).replace(/\n/g, " ")}`,
+          );
+        }
+
+        if (scormMatch) {
+          displayText = rawText.replace(scormMatch[0], "").trim();
+          const rawJson = scormMatch[1];
+
+          // percobaan 1: parse langsung
+          try {
+            state.finalResult = JSON.parse(rawJson);
+          } catch (e1) {
+            console.warn("Parse SCORM_DATA gagal (percobaan 1):", e1);
+            // percobaan 2: bersihkan trailing comma & smart quotes yang sering bikin AI meleset
+            try {
+              const cleaned = rawJson
+                .replace(/[\u201C\u201D]/g, '"')
+                .replace(/[\u2018\u2019]/g, "'")
+                .replace(/,\s*([}\]])/g, "$1");
+              state.finalResult = JSON.parse(cleaned);
+              console.warn(
+                "Parse SCORM_DATA berhasil setelah dibersihkan (percobaan 2).",
+              );
+            } catch (e2) {
+              console.warn("Parse SCORM_DATA gagal total (percobaan 2):", e2);
+              // percobaan 3: fallback minimal, ambil score & category doang lewat regex
+              const scoreMatch = rawJson.match(/"score"\s*:\s*(\d+)/);
+              const categoryMatch = rawJson.match(/"category"\s*:\s*"([^"]+)"/);
+              if (scoreMatch || categoryMatch) {
+                state.finalResult = {
+                  score: scoreMatch ? parseInt(scoreMatch[1], 10) : null,
+                  maxScore: 100,
+                  category: categoryMatch ? categoryMatch[1] : null,
+                };
+                console.warn(
+                  "Fallback minimal dipakai — hanya score/category yang terkirim, field lain kosong.",
+                );
+              } else {
+                console.error(
+                  "Gagal total ambil data dari SCORM_DATA, AI_ROLEPLAY_FINAL tidak akan terkirim.",
+                );
+              }
+            }
+          }
+        }
+
+        state.history.push({ role: "model", text: rawText });
+
+        if (scormMatch && state.finalResult) {
+          state.phase = "ASSESSMENT";
+          updateStatePill();
+          addBubble("model", displayText, "assessment");
+          logResultToSheet(); // catat otomatis ke Google Sheets begitu hasil siap
+          renderAssessmentActions(); // tombol unduh/cetak rapor
+          setInputEnabled(false);
+        } else {
+          addBubble("model", displayText);
+          if (state.phase === "ROLEPLAY") {
+            renderRoleplayActions();
+            setInputEnabled(true);
+            els.textInput.focus();
+          }
+        }
+      }
+
+      function renderAssessmentActions() {
+        els.quickActions.innerHTML = "";
+
+        const downloadBtn = document.createElement("button");
+        downloadBtn.className = "quick-btn";
+        downloadBtn.style.cssText =
+          "background:var(--accent);color:#fff;font-weight:700;";
+        downloadBtn.textContent = "⬇ Unduh Rapor";
+        downloadBtn.addEventListener("click", downloadReport);
+        els.quickActions.appendChild(downloadBtn);
+
+        const printBtn = document.createElement("button");
+        printBtn.className = "quick-btn";
+        printBtn.textContent = "Cetak / Simpan PDF";
+        printBtn.addEventListener("click", printReport);
+        els.quickActions.appendChild(printBtn);
+      }
+
+      /* =========================================================================
+   RAPOR — HTML generator dipakai bersama buat "Cetak/Simpan PDF" (desktop)
+   dan "Unduh Rapor" (download langsung, lebih reliable di mobile karena
+   dialog print di browser mobile suka tidak konsisten/tidak menawarkan
+   opsi Save as PDF dengan jelas).
+   ========================================================================= */
+      function listToHtml(arr) {
+        if (!arr || !arr.length) return "<li>-</li>";
+        return arr
+          .filter(Boolean)
+          .map((item) => `<li>${escapeHtml(item)}</li>`)
+          .join("");
+      }
+
+      function buildReportInnerHtml() {
+        const r = state.finalResult || {};
+        const b = r.breakdown || {};
+        const now = new Date().toLocaleString("id-ID");
+
+        return `
+    <h1>Rapor Hasil Roleplay</h1>
+    <div class="meta">
+      Nama: ${escapeHtml(state.participantName || "-")} &nbsp;|&nbsp;
+      NIK: ${escapeHtml(state.participantNik || "-")}<br>
+      Bahasa: ${escapeHtml(state.language || "-")} &nbsp;|&nbsp;
+      Level: ${escapeHtml(state.level || "-")} &nbsp;|&nbsp;
+      Produk: ${escapeHtml(state.product || "-")} &nbsp;|&nbsp;
+      Dicetak: ${now}
+    </div>
+    <div class="score-line">Skor Total: ${escapeHtml(r.score ?? "-")} / ${escapeHtml(r.maxScore ?? 100)} — ${escapeHtml(r.category || "-")}</div>
+
+    <h2>Score Breakdown</h2>
+    <table>
+      <tr><td>Preparation Awareness</td><td>${escapeHtml(b.preparation ?? 0)} / 5</td></tr>
+      <tr><td>Opening & Rapport</td><td>${escapeHtml(b.opening ?? 0)} / 15</td></tr>
+      <tr><td>Needs Discovery & SPIN</td><td>${escapeHtml(b.needsDiscovery ?? 0)} / 15</td></tr>
+      <tr><td>Product Knowledge & FAB</td><td>${escapeHtml(b.productKnowledge ?? 0)} / 15</td></tr>
+      <tr><td>Root Cause Analysis</td><td>${escapeHtml(b.rootCause ?? 0)} / 15</td></tr>
+      <tr><td>Handling Objection</td><td>${escapeHtml(b.handlingObjection ?? 0)} / 20</td></tr>
+      <tr><td>Closing & Trial Order</td><td>${escapeHtml(b.closing ?? 0)} / 10</td></tr>
+      <tr><td>Communication & Professionalism</td><td>${escapeHtml(b.communication ?? 0)} / 5</td></tr>
+    </table>
+
+    <h2>Analisis Objection</h2>
+    <table>
+      <tr><td>Objection Utama</td><td>${escapeHtml(r.objectionMain || "-")}</td></tr>
+      <tr><td>Objection Lanjutan</td><td>${escapeHtml(r.objectionFollow || "-")}</td></tr>
+      <tr><td>Root Cause Ditemukan?</td><td>${escapeHtml(r.rootCauseFound || "-")}</td></tr>
+    </table>
+
+    <h2>Kekuatan</h2>
+    <ul>${listToHtml(r.strengths)}</ul>
+
+    <h2>Area Perbaikan</h2>
+    <ul>${listToHtml(r.improvements)}</ul>
+
+    <h2>Peluang yang Terlewat</h2>
+    <ul>${listToHtml(r.missedOpportunity)}</ul>
+
+    <h2>Contoh Respons yang Lebih Baik</h2>
+    <ul>${listToHtml(r.betterResponse)}</ul>
+
+    <h2>Perilaku Sesuai Standar Otsuka</h2>
+    <ul>${listToHtml(r.enhancements)}</ul>
+
+    <h2>Stop — Start — Continue</h2>
+    <table>
+      <tr><td>Stop</td><td>${escapeHtml(r.stop || "-")}</td></tr>
+      <tr><td>Start</td><td>${escapeHtml(r.start || "-")}</td></tr>
+      <tr><td>Continue</td><td>${escapeHtml(r.continue || "-")}</td></tr>
+    </table>
+
+    <h2>Fokus Coaching Berikutnya</h2>
+    <p>${escapeHtml(r.finalCoaching || "-")}</p>
+  `;
+      }
+
+      // Opsi A: cetak/simpan PDF lewat dialog print browser (bagus di desktop,
+      // kurang konsisten di beberapa browser mobile)
+      function printReport() {
+        document.getElementById("printArea").innerHTML = buildReportInnerHtml();
+        window.print();
+      }
+
+      // Opsi B: download langsung sebagai file .html mandiri — SELALU jalan
+      // di desktop maupun mobile (Android/iOS), tidak tergantung dukungan
+      // dialog print masing-masing browser. File hasil download bisa dibuka
+      // di browser mana pun dan terlihat rapi (bukan cuma teks polos).
+      function downloadReport() {
+        const r = state.finalResult || {};
+        const now = new Date();
+        const stamp = now.toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        const fileName = `Rapor-${(state.participantName || "Peserta").replace(/[^a-zA-Z0-9]/g, "_")}-${stamp}.html`;
+
+        const fullHtml = `<!DOCTYPE html>
+<html lang="id"><head><meta charset="UTF-8">
+<title>Rapor Hasil Roleplay - ${escapeHtml(state.participantName || "")}</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;color:#1c1b19;max-width:720px;margin:24px auto;padding:0 16px;line-height:1.5;}
+  h1{font-size:1.4rem;margin-bottom:4px;}
+  .meta{font-size:.85rem;color:#555;margin-bottom:16px;}
+  .score-line{font-size:1.15rem;font-weight:700;margin-bottom:16px;}
+  table{width:100%;border-collapse:collapse;margin-bottom:18px;}
+  td{padding:6px 8px;border-bottom:1px solid #ddd;font-size:.9rem;}
+  h2{font-size:1.05rem;margin:20px 0 8px;border-bottom:1px solid #999;padding-bottom:4px;}
+  ul{margin:0 0 12px;padding-left:20px;font-size:.9rem;}
+</style></head>
+<body>${buildReportInnerHtml()}</body></html>`;
+
+        const blob = new Blob([fullHtml], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      }
+
+      function restart() {
+        state = {
+          phase: "HOME",
+          language: null,
+          level: null,
+          product: null,
+          participantName: null,
+          participantNik: null,
+          history: [],
+          finalResult: null,
+        };
+        els.transcript.innerHTML = "";
+        init();
+      }
+
+      function setInputEnabled(enabled) {
+        els.textInput.disabled = !enabled;
+        els.sendBtn.disabled = !enabled;
+        if (els.micBtn) {
+          els.micBtn.disabled = !enabled || !speechSupported;
+          if (!enabled && isRecording && recognizer) {
+            recognizer.stop(); // jangan biarkan rekaman jalan di background pas input di-disable
+          }
+        }
+      }
+
+      /* =========================================================================
+   VOICE INPUT (Web Speech API) — opsional, fallback diam kalau browser
+   tidak mendukung (misal Firefox/Safari). Hasil ucapan cuma ngisi kolom
+   teks yang sudah ada; alur kirim/AI tetap sama persis.
+   ========================================================================= */
+      const SpeechRecognitionAPI =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      const speechSupported = !!SpeechRecognitionAPI;
+      let recognizer = null;
+      let isRecording = false;
+
+      // pemetaan bahasa internal -> kode BCP-47 buat speech recognition.
+      // Sunda/Jawa/Melayu tidak punya kode khusus yang didukung browser,
+      // jadi tetap pakai id-ID (lebih akurat daripada tidak dikenali sama sekali).
+      function speechLangCode() {
+        return "id-ID";
+      }
+
+      if (!speechSupported && els.micBtn) {
+        els.micBtn.style.display = "none"; // sembunyikan tombol kalau browser tidak dukung sama sekali
+      }
+
+      if (speechSupported && els.micBtn) {
+        els.micBtn.addEventListener("click", () => {
+          if (isRecording) {
+            recognizer && recognizer.stop();
+            return;
+          }
+          startRecording();
+        });
+      }
+
+      function startRecording() {
+        try {
+          recognizer = new SpeechRecognitionAPI();
+          recognizer.lang = speechLangCode();
+          recognizer.interimResults = true; // biar keliatan live kalau mic beneran nangkep suara
+          recognizer.maxAlternatives = 1;
+          recognizer.continuous = false;
+
+          const originalPlaceholder = els.textInput.placeholder;
+
+          recognizer.onstart = () => {
+            isRecording = true;
+            els.micBtn.classList.add("recording");
+            els.micBtn.textContent = "⏹";
+            els.textInput.placeholder = "Mendengarkan... silakan bicara";
+          };
+          recognizer.onresult = (event) => {
+            let finalText = "";
+            let interimText = "";
+            for (let i = 0; i < event.results.length; i++) {
+              if (event.results[i].isFinal)
+                finalText += event.results[i][0].transcript;
+              else interimText += event.results[i][0].transcript;
+            }
+            if (finalText) {
+              els.textInput.value =
+                (els.textInput.value ? els.textInput.value + " " : "") +
+                finalText.trim();
+            } else if (interimText) {
+              // tampilkan sementara di placeholder biar kelihatan mic nangkep suara real-time
+              els.textInput.placeholder = "Mendengar: " + interimText;
+            }
+            els.textInput.focus();
+          };
+          recognizer.onerror = (event) => {
+            logDebug(
+              "Voice input error: " +
+                event.error +
+                (event.error === "no-speech"
+                  ? " — mic tidak mendeteksi suara sama sekali, cek input device/volume mic di OS."
+                  : ""),
+            );
+          };
+          recognizer.onend = () => {
+            isRecording = false;
+            els.micBtn.classList.remove("recording");
+            els.micBtn.textContent = "🎤";
+            els.textInput.placeholder = originalPlaceholder;
+          };
+          recognizer.start();
+        } catch (e) {
+          logDebug("Voice input gagal dimulai: " + e.message);
+        }
+      }
+
+      /* =========================================================================
+   JEMBATAN KE STORYLINE (postMessage)
+   ========================================================================= */
+      /* =========================================================================
+   CATAT HASIL KE GOOGLE SHEETS (via proxy, fire-and-forget)
+   ========================================================================= */
+      async function logResultToSheet(attempt) {
+        attempt = attempt || 1;
+        const maxAttempts = 1 + (CONFIG.MAX_RETRIES || 2);
+        if (!CONFIG.PROXY_URL || !state.finalResult) return;
+        const r = state.finalResult;
+
+        try {
+          const res = await fetch(CONFIG.PROXY_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" }, // hindari CORS preflight ke Apps Script
+            body: JSON.stringify({
+              action: "log",
+              data: {
+                nama: state.participantName || "",
+                nik: state.participantNik || "",
+                language: state.language,
+                level: state.level || "Basic",
+                product: state.product || "",
+                score: r.score,
+                maxScore: r.maxScore || 100,
+                category: r.category,
+                breakdown: r.breakdown || {},
+                strengths: r.strengths || [],
+                improvements: r.improvements || [],
+                missedOpportunity: r.missedOpportunity || [],
+                betterResponse: r.betterResponse || [],
+                enhancements: r.enhancements || [],
+                objectionMain: r.objectionMain || "",
+                objectionFollow: r.objectionFollow || "",
+                rootCauseFound: r.rootCauseFound || "",
+                stop: r.stop || "",
+                start: r.start || "",
+                continue: r.continue || "",
+                finalCoaching: r.finalCoaching || "",
+              },
+            }),
+          });
+
+          // fetch() resolve bukan berarti sukses - Apps Script tetap balas
+          // status 200 meski error, jadi WAJIB cek isi body-nya.
+          const text = await res.text();
+          let parsed;
+          try {
+            parsed = JSON.parse(text);
+          } catch (e) {
+            parsed = null;
+          }
+          if (!res.ok || !parsed || parsed.error) {
+            const msg =
+              parsed && parsed.message
+                ? parsed.message
+                : "HTTP " + res.status + " - " + text.slice(0, 150);
+            throw new Error(msg);
+          }
+          logDebug("Hasil berhasil dicatat ke Google Sheets.");
+          hideRetrySheetButton();
+        } catch (err) {
+          console.warn(`Catat ke Sheets percobaan ${attempt}/${maxAttempts} gagal:`, err.message);
+          if (attempt < maxAttempts) {
+            logDebug(`Gagal catat ke Sheets (percobaan ${attempt}), mencoba ulang...`);
+            await new Promise((r2) => setTimeout(r2, CONFIG.RETRY_DELAY_MS || 1500));
+            return logResultToSheet(attempt + 1);
+          }
+          logDebug("Gagal catat ke Google Sheets setelah " + maxAttempts + " percobaan: " + err.message);
+          showRetrySheetButton();
+        }
+      }
+
+      // Tombol manual "Coba catat ulang" - muncul kalau semua percobaan otomatis gagal,
+      // supaya peserta/admin tidak perlu mengulang seluruh simulasi cuma untuk retry ini.
+      function showRetrySheetButton() {
+        let btn = document.getElementById("retrySheetBtn");
+        if (btn) { btn.style.display = "inline-block"; return; }
+        btn = document.createElement("button");
+        btn.id = "retrySheetBtn";
+        btn.textContent = "Coba Catat Ulang ke Sheets";
+        btn.style.cssText =
+          "margin-left:8px;padding:6px 12px;border-radius:6px;border:1px solid #c0392b;background:#fff;color:#c0392b;cursor:pointer;font-size:0.85rem;";
+        btn.addEventListener("click", () => {
+          btn.disabled = true;
+          logResultToSheet();
+        });
+        const anchor = document.getElementById("debugLine") || document.body;
+        anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+      }
+      function hideRetrySheetButton() {
+        const btn = document.getElementById("retrySheetBtn");
+        if (btn) btn.remove();
+      }
+
+      function postFinalResult() {
+        if (!state.finalResult) return;
+        const r = state.finalResult;
+        const b = r.breakdown || {};
+        const toNum = (val) => {
+          const n = Number(val);
+          return Number.isFinite(n) ? n : 0; // fallback 0 kalau null/undefined/bukan angka, hindari NaN di Storyline
+        };
+        logDebug("finalResult mentah: " + JSON.stringify(r));
+        sendToParent({
+          type: "AI_ROLEPLAY_FINAL",
+          score: toNum(r.score),
+          maxScore: toNum(r.maxScore) || 100,
+          category: r.category || "-",
+          language: state.language,
+          level: state.level || "Basic",
+          product: state.product || null,
+          completed: true,
+          // breakdown 8 kategori rubrik (fallback 0, bukan null, biar gak NaN di Storyline)
+          b_preparation: toNum(b.preparation),
+          b_opening: toNum(b.opening),
+          b_needsDiscovery: toNum(b.needsDiscovery),
+          b_productKnowledge: toNum(b.productKnowledge),
+          b_rootCause: toNum(b.rootCause),
+          b_handlingObjection: toNum(b.handlingObjection),
+          b_closing: toNum(b.closing),
+          b_communication: toNum(b.communication),
+          // narasi terstruktur
+          enhancements: r.enhancements || [],
+          objectionMain: r.objectionMain || "",
+          objectionFollow: r.objectionFollow || "",
+          rootCauseFound: r.rootCauseFound || "",
+          strengths: r.strengths || [],
+          improvements: r.improvements || [],
+          missedOpportunity: r.missedOpportunity || [],
+          betterResponse: r.betterResponse || [],
+          stop: r.stop || "",
+          start: r.start || "",
+          continue: r.continue || "",
+          finalCoaching: r.finalCoaching || "",
+        });
+      }
+      function sendToParent(message) {
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage(message, "*");
+          }
+          console.log("[postMessage]", message);
+        } catch (e) {
+          console.warn("Gagal mengirim postMessage:", e);
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>
