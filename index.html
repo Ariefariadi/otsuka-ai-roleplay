@@ -298,19 +298,6 @@
         font-size: 0.85rem;
         display: none;
       }
-      #debugLine {
-        margin: 4px 16px 0;
-        padding: 4px 10px;
-        background: #eef4fa;
-        border: 1px dashed var(--accent);
-        color: var(--accent-dark);
-        border-radius: 6px;
-        font-size: 0.68rem;
-        font-family: monospace;
-        white-space: pre-wrap;
-        word-break: break-all;
-        flex-shrink: 0;
-      }
       .typing-dots {
         display: inline-flex;
         gap: 3px;
@@ -357,8 +344,6 @@
         tidak bisa berjalan tanpa proxy aktif — lihat panduan penggunaan untuk
         deploy <code>gemini-proxy-otsuka.gs</code>.
       </div>
-
-      <div id="debugLine">Debug: menunggu aktivitas...</div>
 
       <div id="scrollArea">
         <div id="transcript"></div>
@@ -418,13 +403,15 @@
         micBtn: document.getElementById("micBtn"),
         statePill: document.getElementById("statePill"),
         setupNotice: document.getElementById("setupNotice"),
-        debugLine: document.getElementById("debugLine"),
       };
 
+      // Bar debug visual sudah dihapus untuk versi finishing/produksi. Fungsi
+      // ini dipertahankan sebagai no-op supaya semua pemanggilnya di kode lain
+      // tidak perlu diubah satu-satu - pesannya tetap tercatat di console
+      // browser (F12) untuk keperluan diagnosa developer, tapi tidak lagi
+      // tampil ke peserta.
       function logDebug(text) {
-        if (!els.debugLine) return;
-        const time = new Date().toLocaleTimeString("id-ID", { hour12: false });
-        els.debugLine.textContent = `[${time}] ${text}`;
+        console.log("[debug]", text);
       }
 
       function init() {
@@ -1126,6 +1113,10 @@
       const SpeechRecognitionAPI =
         window.SpeechRecognition || window.webkitSpeechRecognition;
       const speechSupported = !!SpeechRecognitionAPI;
+      const isSecureCtx =
+        window.isSecureContext ||
+        location.protocol === "https:" ||
+        location.hostname === "localhost";
       let recognizer = null;
       let isRecording = false;
 
@@ -1142,6 +1133,18 @@
 
       if (speechSupported && els.micBtn) {
         els.micBtn.addEventListener("click", () => {
+          if (!isSecureCtx) {
+            // Web Speech API diblokir browser (terutama Android Chrome) kalau
+            // halaman dibuka lewat file:// atau http:// biasa - WAJIB https://
+            // atau localhost. Kasih tahu jelas, jangan diam-diam gagal.
+            addBubble(
+              "system",
+              "Voice input tidak bisa dipakai: halaman ini dibuka tanpa HTTPS (" +
+                location.protocol +
+                "). Buka lewat alamat https:// atau localhost supaya mic browser bisa diakses.",
+            );
+            return;
+          }
           if (isRecording) {
             recognizer && recognizer.stop();
             return;
@@ -1185,13 +1188,23 @@
             els.textInput.focus();
           };
           recognizer.onerror = (event) => {
-            logDebug(
-              "Voice input error: " +
-                event.error +
-                (event.error === "no-speech"
-                  ? " — mic tidak mendeteksi suara sama sekali, cek input device/volume mic di OS."
-                  : ""),
-            );
+            // Pesan spesifik per jenis error, supaya user tahu harus ngapain
+            // (bukan cuma "gagal" generik) - ini penyebab paling sering di Android.
+            const hints = {
+              "not-allowed":
+                "izin mic ditolak. Cek izin microphone untuk browser ini di Settings Android, lalu coba lagi.",
+              "service-not-allowed":
+                "layanan speech-to-text diblokir (biasanya karena bukan HTTPS, atau browser dalam mode in-app/WebView yang tidak mendukung fitur ini - coba buka lewat Chrome biasa, bukan dari dalam aplikasi lain).",
+              "no-speech":
+                "mic tidak mendeteksi suara sama sekali, cek input device/volume mic di OS.",
+              network:
+                "butuh koneksi internet aktif (speech-to-text browser diproses online).",
+              "audio-capture":
+                "mic tidak terdeteksi di perangkat ini.",
+            };
+            const hint = hints[event.error] || "coba lagi, atau ketik manual.";
+            addBubble("system", "Voice input gagal: " + event.error + " — " + hint);
+            logDebug("Voice input error: " + event.error);
           };
           recognizer.onend = () => {
             isRecording = false;
@@ -1201,6 +1214,7 @@
           };
           recognizer.start();
         } catch (e) {
+          addBubble("system", "Voice input gagal dimulai: " + e.message);
           logDebug("Voice input gagal dimulai: " + e.message);
         }
       }
@@ -1286,15 +1300,15 @@
         if (btn) { btn.style.display = "inline-block"; return; }
         btn = document.createElement("button");
         btn.id = "retrySheetBtn";
-        btn.textContent = "Coba Catat Ulang ke Sheets";
+        btn.className = "quick-btn";
         btn.style.cssText =
-          "margin-left:8px;padding:6px 12px;border-radius:6px;border:1px solid #c0392b;background:#fff;color:#c0392b;cursor:pointer;font-size:0.85rem;";
+          "border-color:#c0392b;color:#c0392b;";
+        btn.textContent = "Coba Catat Ulang ke Sheets";
         btn.addEventListener("click", () => {
           btn.disabled = true;
           logResultToSheet();
         });
-        const anchor = document.getElementById("debugLine") || document.body;
-        anchor.parentNode.insertBefore(btn, anchor.nextSibling);
+        els.quickActions.appendChild(btn);
       }
       function hideRetrySheetButton() {
         const btn = document.getElementById("retrySheetBtn");
